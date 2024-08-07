@@ -5,16 +5,76 @@ import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { apiclient } from "@/lib/api-client";
+import { LOGIN_ROUTE, SIGNUP_ROUTE } from "@/utils/constants";
+import { useNavigate } from "react-router-dom";
+import { useAppStore } from "../../../store";
 
 const Auth = () => {
+  const navigate = useNavigate();
+  const {setUserInfo} = useAppStore();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
- const handleLogin = async()=>{};
+  const validateLogin = () => {
+    if (!email.length) {
+      toast.error("Email is required");
+      return false;
+    }
+    if (!password.length) {
+      toast.error("Password is required");
+      return false;
+    }
+    return true;
+  };
 
- const handleSignup = async()=>{};
+  const vaidateSignup = () => {
+    if (!email.length) {
+      toast.error("Email is required");
+      return false;
+    }
+    if (!password.length) {
+      toast.error("Password is required");
+      return false;
+    }
+    if (password !== confirmPassword) {
+      toast.error("Password and confirm password should be the same");
+      return false;
+    }
+    return true;
+  };
 
+  const handleLogin = async () => {
+    if (validateLogin()) {
+      const response = await apiclient.post(
+        LOGIN_ROUTE,
+        { email, password },
+        { withCredentials: true }
+      );
+      if(response.data.users.id){
+        setUserInfo(response.data.users);
+        if(response.data.users.profileSetup)navigate("/chat")
+          else navigate("/profile");
+      }
+      // console.log(response);
+    }
+  };
+
+  const handleSignup = async () => {
+    if (vaidateSignup()) {
+      const response = await apiclient.post(
+        SIGNUP_ROUTE,
+        { email, password },
+        { withCredentials: true }
+      );
+      if (response.status === 201) {
+        setUserInfo(response.data.users);
+        navigate("/profile");
+      }
+    }
+  };
 
   return (
     <div className="h-[100vh] w-[100vw] flex items-center justify-center">
@@ -30,7 +90,7 @@ const Auth = () => {
             </p>
           </div>
           <div className="flex items-center justify-center w-full">
-            <Tabs className="w-3/4">
+            <Tabs className="w-3/4" defaultValue="login">
               <TabsList className="flex bg-transparent rounded-none w-full">
                 <TabsTrigger
                   value="login"
@@ -51,46 +111,50 @@ const Auth = () => {
                   placeholder="Email"
                   className="rounded-full p-6"
                   value={email}
-                  onChange={(e) => setEmail(e.target.email)}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
                 <Input
                   type="password"
                   placeholder="Password"
                   className="rounded-full p-6"
                   value={password}
-                  onChange={(e) => setPassword(e.target.password)}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
-                <Button className="rounded-full p-6" onClick={handleLogin}>Login</Button>
+                <Button className="rounded-full p-6" onClick={handleLogin}>
+                  Login
+                </Button>
               </TabsContent>
               <TabsContent className="flex flex-col gap-5" value="signup">
-              <Input
+                <Input
                   type="email"
                   placeholder="Email"
                   className="rounded-full p-6"
                   value={email}
-                  onChange={(e) => setEmail(e.target.email)}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
                 <Input
                   type="password"
                   placeholder="Password"
                   className="rounded-full p-6"
                   value={password}
-                  onChange={(e) => setPassword(e.target.password)}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
                 <Input
                   type="password"
                   placeholder="Confirm Password"
                   className="rounded-full p-6"
                   value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.confirmPassword)}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
                 />
-                <Button className="rounded-full p-6" onClick={handleSignup}>Signup</Button>
+                <Button className="rounded-full p-6" onClick={handleSignup}>
+                  Signup
+                </Button>
               </TabsContent>
             </Tabs>
           </div>
         </div>
         <div className="hidden xl:flex justify-center items-center">
-          <img src={background} alt="background login"  className="h-[700px]"/>
+          <img src={background} alt="background login" className="h-[700px]" />
         </div>
       </div>
     </div>
